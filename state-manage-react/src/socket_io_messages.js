@@ -1,0 +1,16 @@
+"use strict";
+exports.__esModule = true;
+exports.SERVER_ADD_STATE = exports.CLIENT_ADD_STATE = exports.SERVER_RMV_RESOURCE = exports.CLIENT_RMV_RESOURCE = exports.SERVER_ADD_RESOURCE = exports.CLIENT_ADD_RESOURCE = exports.SERVER_SEND_CHANGED_STATE = exports.CLIENT_CHANGED_STATE = exports.SERVER_DENIED_CHANGE = exports.SERVER_ACCEPT_CHANGE = exports.SERVER_SEND_CHANGED_RESOURCE = exports.CLIENT_CHANGED_RESOURCE = exports.OPEN_PAGE = void 0;
+exports.OPEN_PAGE = "open_page";
+exports.CLIENT_CHANGED_RESOURCE = "client_changed_resource";
+exports.SERVER_SEND_CHANGED_RESOURCE = "server_send_changed_resource";
+exports.SERVER_ACCEPT_CHANGE = "server_accept_change";
+exports.SERVER_DENIED_CHANGE = "server_denied_change";
+exports.CLIENT_CHANGED_STATE = "client_changed_state";
+exports.SERVER_SEND_CHANGED_STATE = "server_send_changed_state";
+exports.CLIENT_ADD_RESOURCE = "client_add_resource";
+exports.SERVER_ADD_RESOURCE = "server_add_resource";
+exports.CLIENT_RMV_RESOURCE = "client_rmv_resource";
+exports.SERVER_RMV_RESOURCE = "server_rmv_resource";
+exports.CLIENT_ADD_STATE = "client_add_state";
+exports.SERVER_ADD_STATE = "server_add_state";
