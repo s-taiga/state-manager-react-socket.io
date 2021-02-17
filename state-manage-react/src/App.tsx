@@ -117,7 +117,7 @@ function App() {
           />
         </div>
         <p id="error_message">{errorMessage}</p>
-        <table id="ResourceStateTable">
+        <table id="ResourceStateTable" style={{ margin: "auto" }}>
           <tbody>
             <tr>
               <td></td>
