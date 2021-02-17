@@ -6,11 +6,12 @@ var socketIo = require("socket.io");
 var fs = require("fs");
 var SIM = require("./state-manage-react/src/socket_io_messages");
 var port = process.env.PORT || 4001;
+var web_address = "http://localhost:3000";
 var app = express();
 var server = http.createServer(app);
 var io = socketIo(server, {
     cors: {
-        origins: ["http://localhost:3000"],
+        origins: [web_address],
         methods: ["GET", "POST"]
     }
 });

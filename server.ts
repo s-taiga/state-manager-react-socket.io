@@ -7,12 +7,13 @@ import * as SIM from './state-manage-react/src/socket_io_messages';
 import * as cors from 'cors';
 
 const port = process.env.PORT || 4001;
+const web_address: string = "http://localhost:3000";
 const app: express.Express = express();
 
 const server: http.Server = http.createServer(app);
 const io: socketIo.Server = socketIo(server, {
   cors: {
-    origins: [`http://localhost:3000`],
+    origins: [web_address],
     methods: ["GET", "POST"],
   }
 });
