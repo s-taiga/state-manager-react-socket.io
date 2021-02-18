@@ -5,9 +5,13 @@ import { Resource, ResourceState, StateTypes } from './class';
 import * as SIM from './socket_io_messages';
 import './App.css';
 
-const socket = socketIOClient('http://localhost:4001');
+// サーバーのアドレス
+const socket = socketIOClient('http://192.168.11.4:4001');
 
+// webアプリ本体
 function App() {
+  // 状態変数一覧
+  // 対象の一覧変数
   const [resources, setResources] = useReducer<Array<Resource>>(
     (currentResource: Array<Resource>, action) => {
       if (action.type === "add") {
@@ -21,6 +25,7 @@ function App() {
       }
     }, []
   );
+  // 状態の一覧変数
   const [states, setStates] = useReducer<Array<ResourceState>>(
     (currentStates: Array<ResourceState>, action) => {
       if (action.type === "add") {
@@ -32,8 +37,12 @@ function App() {
       }
     }, []
   );
+  // 画面非活性を行う用の変数
+  // 現在機能していない
   const [dispState, setDispState] = useState<Boolean>(true);
+  // エラーメッセージ表示
   const [errorMessage, setErrMessage] = useState<string>("");
+  // ユーザー名用変数
   const [userName, setUserName] = useState<string>(localStorage.getItem("user_name"));
 
   // 新しい管理対象
@@ -51,10 +60,13 @@ function App() {
   const [newStateColor, setNewColorState] = useState<string>("");
   const [newStateType, setNewStateType] = useState<StateTypes>("state");
 
+  // 初期処理
+  // useEffectの第二引数が空配列の場合この処理は起動時の一回のみの実行になる
   useEffect(() => {
 
     socket.emit("client_to_server_join");
 
+    // 画面を開いた最初期
     socket.on(SIM.OPEN_PAGE, (init_val: { data: Array<Resource>, state: Array<ResourceState> }) => {
       console.log("init page")
       console.log(init_val.data);
@@ -64,12 +76,14 @@ function App() {
       setStates({ type: "init", data: init_val.state });
     });
 
+    // 対象の変更通知がサーバーから来た場合
     socket.on(SIM.SERVER_SEND_CHANGED_RESOURCE, (target: Resource) => {
       console.log(`changed state: ${target.name}`);
       setResources({ type: "change", data: target });
       setDispState(true);
     });
 
+    // こちらから対象の変更を投げた場合にそれが受容された場合
     socket.on(SIM.SERVER_ACCEPT_CHANGE, (target: Resource) => {
       setErrMessage(`${target.name}の${target.state.name}への状態変更に成功しました`);
       console.log(`${target.name}の${target.state.name}への状態変更に成功しました`);
@@ -77,26 +91,31 @@ function App() {
       setDispState(true);
     });
 
+    // 対象の変更が受け付けられなかった場合
     socket.on(SIM.SERVER_DENIED_CHANGE, (target: Resource) => {
       setErrMessage(`${target.name}の${target.state.name}への状態変更に失敗しました`);
       console.log(`${target.name}の${target.state.name}への状態変更に失敗しました`);
       setDispState(true);
     });
 
+    // 状態の変更通知がサーバーから来た場合
     socket.on(SIM.SERVER_SEND_CHANGED_STATE, (target: ResourceState) => {
       setStates({ type: "change", data: target });
     });
 
+    // 対象追加がサーバーから通知された場合
     socket.on(SIM.SERVER_ADD_RESOURCE, (resource: Resource) => {
       console.log(resources);
       setResources({ type: "add", data: [resource] });
     });
 
+    // 対象削除がサーバーから通知された場合
     socket.on(SIM.SERVER_RMV_RESOURCE, (resource: Resource) => {
       console.log(`remove ${resource.name}`);
       setResources({ type: "remove", data: resource });
     });
 
+    // 状態追加がサーバーから通知された場合
     socket.on(SIM.SERVER_ADD_STATE, (state: ResourceState) => {
       console.log(`added state, name: ${state.name}, id: ${state.id}`);
       console.log(states);
@@ -104,6 +123,10 @@ function App() {
     });
 
   }, []);
+
+  // ページ描画部分
+  // ほんとはApp.tsxにだらだら書かずに小さいコンポーネントに分ける方が良い
+  // のちのち複数ページにわける必要が出たりするとなおさら
   return (
     <div className="App">
       <div id="main_content" style={{ zIndex: 0 }}>
