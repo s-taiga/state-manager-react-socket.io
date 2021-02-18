@@ -37,6 +37,10 @@ function App() {
       }
     }, []
   );
+
+  // ソート制御変数
+  const [sortResource, setSortResource] = useState<Boolean>(false);
+  const [sortState, setSortState] = useState<Boolean>(false);
   // 画面非活性を行う用の変数
   // 現在機能していない
   const [dispState, setDispState] = useState<Boolean>(true);
@@ -86,16 +90,16 @@ function App() {
 
     // こちらから対象の変更を投げた場合にそれが受容された場合
     socket.on(SIM.SERVER_ACCEPT_CHANGE, (target: Resource) => {
-      setErrMessage(`${target.name}の${target.state.name}への状態変更に成功しました`);
-      console.log(`${target.name}の${target.state.name}への状態変更に成功しました`);
+      setErrMessage(`${target.name}を${target.state.name}にしました`);
+      console.log(`${target.name}を${target.state.name}にしました`);
       setResources({ type: "change", data: target });
       setDispState(true);
     });
 
     // 対象の変更が受け付けられなかった場合
     socket.on(SIM.SERVER_DENIED_CHANGE, (target: Resource) => {
-      setErrMessage(`${target.name}の${target.state.name}への状態変更に失敗しました`);
-      console.log(`${target.name}の${target.state.name}への状態変更に失敗しました`);
+      setErrMessage(`${target.name}を${target.state.name}にできませんでした`);
+      console.log(`${target.name}を${target.state.name}にできませんでした`);
       setDispState(true);
     });
 
@@ -140,82 +144,127 @@ function App() {
             }}
           />
         </div>
-        <table id="ResourceStateTable" style={{ margin: "auto" }}>
+        <table id="ResourceStateTable" style={{ borderCollapse: "collapse", margin: "auto" }}>
           <tbody>
-            <tr>
+            <tr
+              style={{
+                borderBottom: "2px gray solid"
+              }}
+            >
               <td></td>
-              <td>対象の機器名</td>
-              <td style={{ width: "200px" }}>機器の状態</td>
+              <td>
+                対象の機器名
+                <input
+                  type="checkbox"
+                  onChange={(e) => {
+                    console.log(`resorce sort ${e.target.checked}`);
+                    setSortResource(e.target.checked);
+                  }}
+                />
+              </td>
+              <td style={{ width: "200px" }}>
+                機器の状態
+                <input
+                  type="checkbox"
+                  onChange={(e) => {
+                    console.log(`state sort ${e.target.checked}`);
+                    setSortState(e.target.checked);
+                  }}
+                />
+              </td>
               <td>ユーザー</td>
             </tr>
-            {resources.map((resource: Resource) => (
-              <tr>
-                <td>
-                  <input
-                    type="button"
-                    value="－"
-                    onClick={() => {
-                      console.log(`remove ${resource.name}`);
-                      socket.emit(SIM.CLIENT_RMV_RESOURCE, resource);
-                    }}
-                  />
-                </td>
-                <td style={{ backgroundColor: resource.state.color }}>
-                  <input
-                    type="text"
-                    value={resource.name}
-                    style={{
-                      textAlign: "center",
-                      border: "none",
-                      backgroundColor: resource.state.color,
-                      fontSize: "15px"
-                    }}
-                    onChange={(e) => {
-                      console.log(`editing: ${e.currentTarget.textContent}`);
-                      socket.emit(SIM.CLIENT_CHANGED_RESOURCE, {
-                        data: {
-                          id: resource.id,
-                          name: e.target.value,
-                          state: resource.state
-                        },
-                        name: userName
-                      });
-                    }}
-                  />
-                </td>
-                <td>
-                  <Select
-                    options={
-                      states.map((state: ResourceState) => { return { label: state.name, value: state.id } })
-                    }
-                    value={{ label: resource.state.name, value: resource.state.id }}
-                    onChange={(value) => {
-                      let newState: ResourceState = states.filter((state: ResourceState) => {
-                        console.log(value);
-                        return state.id === value.value;
-                      })[0];
-                      if (newState.type === "possess") {
-                        newState.user = userName;
-                      } else {
-                        newState.user = "";
+            {resources
+              .sort((a: Resource, b: Resource) => {
+                const localeComp: number = a.name.localeCompare(b.name);
+                const a_state: number = a.state ? a.state.id : 0;
+                const b_state: number = b.state ? b.state.id : 0;
+                const stateComp: number = b_state - a_state;
+                if (sortResource && sortState) {
+                  // どちらのソートもonの場合
+                  // 機器名をベースにソートを行う
+                  return localeComp === 0 ? stateComp : localeComp;
+                } else if (sortResource && !sortState) {
+                  return localeComp;
+                } else if (!sortResource && sortState) {
+                  return stateComp;
+                } else {
+                  // ソートを行わない
+                  return 0;
+                }
+              })
+              .map((resource: Resource) => (
+                <tr>
+                  <td>
+                    <input
+                      type="button"
+                      value="－"
+                      onClick={() => {
+                        console.log(`remove ${resource.name}`);
+                        socket.emit(SIM.CLIENT_RMV_RESOURCE, resource);
+                      }}
+                    />
+                  </td>
+                  <td style={{ backgroundColor: resource.state.color }}>
+                    <input
+                      type="text"
+                      value={resource.name}
+                      style={{
+                        textAlign: "center",
+                        border: "none",
+                        backgroundColor: resource.state.color,
+                        fontSize: "15px"
+                      }}
+                      onChange={(e) => {
+                        console.log(`editing: ${e.currentTarget.textContent}`);
+                        socket.emit(SIM.CLIENT_CHANGED_RESOURCE, {
+                          data: {
+                            id: resource.id,
+                            name: e.target.value,
+                            state: resource.state
+                          },
+                          name: userName
+                        });
+                      }}
+                    />
+                  </td>
+                  <td>
+                    <Select
+                      options={
+                        states.map((state: ResourceState) => { return { label: state.name, value: state.id } })
                       }
-                      console.log(`send new state: ${newState.name}`);
-                      socket.emit(SIM.CLIENT_CHANGED_RESOURCE, {
-                        data: {
-                          id: resource.id,
-                          name: resource.name,
-                          state: newState
-                        },
-                        name: userName
-                      });
-                      setDispState(false);
-                    }}
-                  />
-                </td>
-                <td>{resource.state.user}</td>
-              </tr>
-            ))}
-            <tr>
+                      value={{ label: resource.state.name, value: resource.state.id }}
+                      onChange={(value) => {
+                        let newState: ResourceState = states.filter((state: ResourceState) => {
+                          console.log(value);
+                          return state.id === value.value;
+                        })[0];
+                        if (newState.type === "possess") {
+                          newState.user = userName;
+                        } else {
+                          newState.user = "";
+                        }
+                        console.log(`send new state: ${newState.name}`);
+                        socket.emit(SIM.CLIENT_CHANGED_RESOURCE, {
+                          data: {
+                            id: resource.id,
+                            name: resource.name,
+                            state: newState
+                          },
+                          name: userName
+                        });
+                        setDispState(false);
+                      }}
+                    />
+                  </td>
+                  <td>{resource.state.user}</td>
+                </tr>
+              ))}
+            <tr
+              style={{
+                borderTop: "2px gray solid"
+              }}
+            >
               <td>
                 <input
                   type="button"
@@ -260,7 +309,7 @@ function App() {
       <input
         type="checkbox"
         onChange={(e) => {
-          console.log(`change show state to ${e.target.checked}`)
+          console.log(`change show state to ${e.target.checked}`);
           setIsShow(e.target.checked);
         }}
       />あたらしい機器の状態を追加する
