@@ -56,6 +56,7 @@ function App() {
   const [newResourceState, setNewResourceState] = useState<ResourceState>(initRespurceState);
 
   // 新しい管理状態
+  const [isShowNewStateArea, setIsShow] = useState<Boolean>(false);
   const [newStateName, setNewStateName] = useState<String>("");
   const [newStateColor, setNewColorState] = useState<string>("");
   const [newStateType, setNewStateType] = useState<StateTypes>("state");
@@ -139,13 +140,12 @@ function App() {
             }}
           />
         </div>
-        <p id="error_message">{errorMessage}</p>
         <table id="ResourceStateTable" style={{ margin: "auto" }}>
           <tbody>
             <tr>
               <td></td>
-              <td>対象</td>
-              <td style={{ width: "200px" }}>状態</td>
+              <td>対象の機器名</td>
+              <td style={{ width: "200px" }}>機器の状態</td>
               <td>ユーザー</td>
             </tr>
             {resources.map((resource: Resource) => (
@@ -160,7 +160,29 @@ function App() {
                     }}
                   />
                 </td>
-                <td style={{ backgroundColor: resource.state.color }}>{resource.name}</td>
+                <td style={{ backgroundColor: resource.state.color }}>
+                  <input
+                    type="text"
+                    value={resource.name}
+                    style={{
+                      textAlign: "center",
+                      border: "none",
+                      backgroundColor: resource.state.color,
+                      fontSize: "15px"
+                    }}
+                    onChange={(e) => {
+                      console.log(`editing: ${e.currentTarget.textContent}`);
+                      socket.emit(SIM.CLIENT_CHANGED_RESOURCE, {
+                        data: {
+                          id: resource.id,
+                          name: e.target.value,
+                          state: resource.state
+                        },
+                        name: userName
+                      });
+                    }}
+                  />
+                </td>
                 <td>
                   <Select
                     options={
@@ -234,7 +256,17 @@ function App() {
           </tbody>
         </table>
       </div>
-      <div id="addNewState">
+      <p id="error_message">{errorMessage}</p>
+      <input
+        type="checkbox"
+        onChange={(e) => {
+          console.log(`change show state to ${e.target.checked}`)
+          setIsShow(e.target.checked);
+        }}
+      />あたらしい機器の状態を追加する
+      <div id="addNewState"
+        style={{ display: isShowNewStateArea ? "" : "none" }}
+      >
         <span>新しい状態</span>
         <input
           type="text"
@@ -258,21 +290,21 @@ function App() {
           <option value="state">状態</option>
           <option value="possess">所有</option>
         </select>
+        <input
+          type="button"
+          value="新しい状態を追加する"
+          onClick={() => {
+            const newState: ResourceState = {
+              id: -1,
+              name: newStateName,
+              color: newStateColor,
+              type: newStateType
+            }
+            console.log(`add ${newState.name}`);
+            socket.emit(SIM.CLIENT_ADD_STATE, newState);
+          }}
+        />
       </div>
-      <input
-        type="button"
-        value="新しい状態を追加する"
-        onClick={() => {
-          const newState: ResourceState = {
-            id: -1,
-            name: newStateName,
-            color: newStateColor,
-            type: newStateType
-          }
-          console.log(`add ${newState.name}`);
-          socket.emit(SIM.CLIENT_ADD_STATE, newState);
-        }}
-      />
       <div id="block_input"
         style={{
           zIndex: 1,

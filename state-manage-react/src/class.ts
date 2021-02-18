@@ -17,6 +17,7 @@ export interface Resource {
     id: number;
     name: string;
     state: ResourceState;
+    editing?: boolean;
 }
 
 export type Resources = Array<Resource>;
